@@ -28,12 +28,11 @@
   let orderCount = 0;
 
   const db = new pg.Client({
-      user: process.env.PG_USER,
-      host : process.env.PG_HOST, 
-      database : process.env.PG_DATABASE,
-      password : process.env.PG_PASSWORD,
-      port: process.env.PG_PORT
-  });
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
   app.use(
       session({
@@ -87,6 +86,16 @@
   };
 
   cakeDisplay();
+
+  app.get("/db-test", async (req, res) => {
+    try {
+      const result = await db.query("SELECT NOW()");
+      res.send(`✅ Connected to DB: ${result.rows[0].now}`);
+    } catch (err) {
+      res.status(500).send("❌ DB connection failed: " + err.message);
+    }
+  });
+
 
   app.get("/", async (req, res) => {
 
@@ -250,7 +259,9 @@
         banner: type,
         likedIds,
         currentPage: page,
-        totalPages
+        totalPages,
+        sort: null,
+        search: null
       });
 
     } catch (err) {
